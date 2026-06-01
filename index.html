@@ -332,7 +332,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-const MEMBERS = ['Gründer 1','Gründer 2','Gründer 3','Gründer 4','Nico (Advisor)'];
+const MEMBERS = ['Noam','Ramun','Lucien','Maxim','Nico (Advisor)'];
 const ROLES = ['CEO / Strategie','Finanzen / Legal','Marketing & Brand','Product / Tech','Advisor'];
 const AVATAR_COLORS = [
   {bg:'#ede9ff',fg:'#6c5ce7'},{bg:'#e3f7ee',fg:'#00a86b'},
@@ -361,11 +361,7 @@ const SEED = {
     t7:{title:'Logo Design',owner:'Gründer 1',deadline:'2026-06-12',priority:'mid',col:'doing',notes:''},
   },
   events: {
-    e1:{title:'Team Kick-off',date:'2026-06-03',color:'purple'},
-    e2:{title:'Investor Call',date:'2026-06-10',color:'green'},
-    e3:{title:'Pitch Deck Deadline',date:'2026-06-15',color:'amber'},
-    e4:{title:'Legal Review',date:'2026-06-20',color:'purple'},
-    e5:{title:'Launch Sprint',date:'2026-06-28',color:'green'},
+    e1:{title:'Launch Organisation Site',date:'2026-06-01',color:'purple'}
   },
   visions: {
     v1:{label:'Umsatz Ziel Q4',num:'50K',unit:'CHF',sub:'Erster Revenue Milestone',progress:15,tag:'Finanzen',color:'purple'},
