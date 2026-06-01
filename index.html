@@ -626,7 +626,7 @@ function openModal(type,col){
   const title={task:'Aufgabe hinzufügen',event:'Event hinzufügen',vision:'Ziel hinzufügen',contract:'Vertrag hinzufügen'};
   document.getElementById('modal-title').textContent=title[type];
   if(type==='task'){
-    document.getElementById('modal-body').innerHTML=taskForm(col?{col,owner:MEMBERS[0],deadline:'2026-06-30',priority:'mid',title:'',notes:''}:null).replace(/<button class="btn-danger"[^>]*>[\s\S]*?<\/button>/,'');
+    document.getElementById('modal-body').innerHTML=taskForm(col?{col,owner:MEMBERS[0],deadline:'2026-06-30',priority:'mid',title:'',notes:''}:null).replace(/<button class="btn-danger"[\s\S]*?<\/button>/,'');
     document.getElementById('modal-save').onclick=()=>{
       const t=document.getElementById('f-title').value.trim();if(!t)return;
       push(ref(db,'tasks'),{title:t,col:document.getElementById('f-col').value,owner:document.getElementById('f-owner').value,deadline:document.getElementById('f-deadline').value,priority:document.getElementById('f-priority').value,notes:document.getElementById('f-notes').value});
