@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Startup OS — Live Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<style>
+:root {
+  --bg: #f5f4f0; --surface: #ffffff; --surface2: #f0efe9;
+  --border: rgba(0,0,0,0.08); --border2: rgba(0,0,0,0.14);
+  --text: #1a1a18; --text2: #6b6b65; --text3: #9e9e96;
+  --purple: #6c5ce7; --purple-light: #ede9ff;
+  --green: #00a86b; --green-light: #e3f7ee;
+  --amber: #e8900a; --amber-light: #fef3e2;
+  --red: #e53e3e; --red-light: #fff0f0;
+  --teal: #0d9488; --teal-light: #e0faf5;
+  --radius: 10px; --radius-lg: 14px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06); --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+}
+[data-theme="dark"] {
+  --bg: #111110; --surface: #1c1c1a; --surface2: #252523;
+  --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.14);
+  --text: #f0efe9; --text2: #9e9e96; --text3: #6b6b65;
+  --purple-light: #2a2459; --green-light: #0d2e20;
+  --amber-light: #2e1f04; --red-light: #2e1010; --teal-light: #0a2420;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+.app{display:flex;height:100vh;overflow:hidden;}
+
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px 12px;flex-shrink:0;}
+.logo{display:flex;align-items:center;gap:10px;padding:8px 10px 24px;}
+.logo-icon{width:32px;height:32px;background:var(--purple);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;}
+.logo-text{font-size:14px;font-weight:600;letter-spacing:-.3px;}
+.logo-sub{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;}
+.nav-label{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.8px;text-transform:uppercase;padding:0 10px;margin-bottom:6px;margin-top:8px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius);cursor:pointer;color:var(--text2);font-size:13px;font-weight:500;transition:all .15s;margin-bottom:2px;}
+.nav-item i{font-size:17px;}
+.nav-item:hover{background:var(--surface2);color:var(--text);}
+.nav-item.active{background:var(--purple-light);color:var(--purple);}
+.sidebar-footer{margin-top:auto;padding:12px 10px 0;border-top:1px solid var(--border);}
+.theme-btn{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3);cursor:pointer;background:none;border:none;font-family:'DM Sans',sans-serif;padding:6px 0;}
+.theme-btn:hover{color:var(--text);}
+
+.live-dot{width:7px;height:7px;border-radius:50%;background:#00a86b;display:inline-block;margin-right:6px;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.live-badge{display:flex;align-items:center;font-size:11px;color:var(--green);padding:6px 10px;background:var(--green-light);border-radius:var(--radius);margin-bottom:12px;}
+
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+.topbar{padding:20px 28px 0;display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0;}
+.page-heading h1{font-size:20px;font-weight:600;letter-spacing:-.4px;}
+.page-heading p{font-size:13px;color:var(--text2);margin-top:2px;}
+.add-btn{display:flex;align-items:center;gap:6px;background:var(--purple);color:#fff;border:none;border-radius:var(--radius);padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.add-btn:hover{background:#5a4cd4;transform:translateY(-1px);box-shadow:var(--shadow-md);}
+.content{padding:20px 28px 32px;flex:1;}
+.page{display:none;}.page.active{display:block;}
+
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;}
+.stat-num{font-size:26px;font-weight:600;letter-spacing:-1px;font-family:'DM Mono',monospace;}
+.stat-label{font-size:12px;color:var(--text2);margin-top:2px;}
+
+.kanban-cols{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.col-wrap{background:var(--surface2);border-radius:var(--radius-lg);padding:12px;min-height:240px;border:1px solid var(--border);}
+.col-wrap.drag-over{border-color:var(--purple);background:var(--purple-light);}
+.col-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.col-title-row{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;}
+.col-dot{width:7px;height:7px;border-radius:50%;}
+.col-count{font-size:11px;background:var(--surface);border:1px solid var(--border);border-radius:100px;padding:1px 7px;color:var(--text3);font-family:'DM Mono',monospace;}
+.task-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:7px;cursor:grab;transition:all .15s;}
+.task-card:hover{border-color:var(--border2);box-shadow:var(--shadow);transform:translateY(-1px);}
+.task-card:active{cursor:grabbing;opacity:.6;}
+.task-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:5px;}
+.task-title{font-size:13px;font-weight:500;line-height:1.35;}
+.prio-pill{font-size:10px;padding:2px 6px;border-radius:100px;font-weight:600;white-space:nowrap;flex-shrink:0;}
+.prio-high{background:var(--red-light);color:var(--red);}
+.prio-mid{background:var(--amber-light);color:var(--amber);}
+.prio-low{background:var(--green-light);color:var(--green);}
+.task-note{font-size:11px;color:var(--text3);margin-bottom:7px;line-height:1.4;}
+.task-footer{display:flex;align-items:center;justify-content:space-between;}
+.task-owner{font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px;}
+.deadline-tag{font-size:11px;padding:2px 7px;border-radius:100px;font-weight:500;font-family:'DM Mono',monospace;}
+.dl-ok{background:var(--green-light);color:var(--green);}
+.dl-warn{background:var(--amber-light);color:var(--amber);}
+.dl-late{background:var(--red-light);color:var(--red);}
+.add-card-btn{width:100%;background:none;border:1px dashed var(--border2);border-radius:var(--radius);padding:7px;font-size:12px;color:var(--text3);cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:4px;transition:all .15s;}
+.add-card-btn:hover{background:var(--surface);color:var(--text2);}
+
+.cal-layout{display:grid;grid-template-columns:1fr 260px;gap:16px;}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.cal-nav h2{font-size:15px;font-weight:600;}
+.icon-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);transition:all .15s;}
+.icon-btn:hover{background:var(--surface);color:var(--text);}
+.cal-days-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.cal-day-label{font-size:11px;color:var(--text3);text-align:center;padding:4px 0;font-weight:600;}
+.cal-cell{min-height:60px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 6px;}
+.cal-cell.today{border-color:var(--purple);}
+.cal-cell.empty{background:transparent;border-color:transparent;}
+.cal-num{font-size:11px;color:var(--text3);margin-bottom:3px;font-family:'DM Mono',monospace;}
+.today-badge{background:var(--purple);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;}
+.cal-ev{font-size:10px;padding:1px 5px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;font-weight:500;}
+.ev-purple{background:var(--purple-light);color:var(--purple);}
+.ev-green{background:var(--green-light);color:var(--green);}
+.ev-amber{background:var(--amber-light);color:var(--amber);}
+.cal-sidebar{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;}
+.sidebar-sec-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;}
+.ev-item{padding:10px 12px;border-radius:var(--radius);margin-bottom:6px;border-left:3px solid var(--purple);background:var(--surface2);}
+.ev-item.green{border-left-color:var(--green);}
+.ev-item.amber{border-left-color:var(--amber);}
+.ev-title{font-size:13px;font-weight:500;}
+.ev-date{font-size:11px;color:var(--text3);margin-top:1px;font-family:'DM Mono',monospace;}
+
+.vision-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.vision-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;transition:all .2s;cursor:pointer;}
+.vision-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
+.v-tag{font-size:10px;font-weight:700;padding:3px 9px;border-radius:100px;display:inline-block;margin-bottom:12px;letter-spacing:.3px;}
+.v-num{font-size:32px;font-weight:600;letter-spacing:-1.5px;font-family:'DM Mono',monospace;line-height:1;}
+.v-unit{font-size:16px;font-weight:400;}
+.v-label{font-size:14px;font-weight:600;margin-top:6px;}
+.v-sub{font-size:12px;color:var(--text2);margin-top:3px;line-height:1.4;}
+.v-progress{height:3px;background:var(--border);border-radius:2px;margin-top:14px;overflow:hidden;}
+.v-fill{height:100%;border-radius:2px;transition:width .6s ease;}
+.manifesto-card{grid-column:1/-1;background:var(--purple);border-color:var(--purple);padding:24px 28px;}
+.manifesto-card .v-sub{color:rgba(255,255,255,.8);font-size:15px;font-style:italic;line-height:1.6;}
+.manifesto-card .v-label{color:#fff;font-size:13px;font-weight:400;letter-spacing:.3px;text-transform:uppercase;}
+.manifesto-card .v-tag{background:rgba(255,255,255,.2);color:#fff;}
+
+.team-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
+.member-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;}
+.avatar{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;margin-bottom:10px;}
+.m-name{font-size:14px;font-weight:600;}
+.m-role{font-size:12px;color:var(--text2);margin-bottom:10px;}
+.task-chips{display:flex;flex-wrap:wrap;gap:4px;}
+.chip{font-size:11px;padding:2px 7px;border-radius:100px;background:var(--surface2);color:var(--text2);border:1px solid var(--border);}
+.chip.high{border-color:rgba(229,62,62,.3);color:var(--red);background:var(--red-light);}
+.contracts-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+.contracts-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;}
+.contract-row{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--border);transition:background .12s;}
+.contract-row:last-child{border-bottom:none;}
+.contract-row:hover{background:var(--surface2);}
+.c-info{display:flex;align-items:center;gap:10px;}
+.c-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.c-title{font-size:13px;font-weight:500;}
+.c-owner{font-size:11px;color:var(--text3);margin-top:1px;}
+.c-status{font-size:11px;padding:4px 10px;border-radius:100px;font-weight:600;cursor:pointer;transition:all .15s;}
+.s-done{background:var(--green-light);color:var(--green);}
+.s-pending{background:var(--amber-light);color:var(--amber);}
+.s-missing{background:var(--red-light);color:var(--red);}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .2s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:24px;width:380px;box-shadow:var(--shadow-md);transform:scale(.95);transition:transform .2s;}
+.modal-overlay.open .modal{transform:scale(1);}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:18px;letter-spacing:-.3px;}
+.form-row{margin-bottom:13px;}
+.form-row label{font-size:11px;font-weight:600;color:var(--text2);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px;}
+.form-row input,.form-row select,.form-row textarea{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius);padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);transition:border-color .15s;outline:none;}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--purple);}
+.form-row textarea{height:64px;resize:none;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;}
+.btn-cancel{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--text2);transition:all .15s;}
+.btn-cancel:hover{color:var(--text);}
+.btn-save{background:var(--purple);color:#fff;border:none;border-radius:var(--radius);padding:8px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.btn-save:hover{background:#5a4cd4;}
+.btn-danger{background:var(--red-light);color:var(--red);border:1px solid rgba(229,62,62,.2);border-radius:var(--radius);padding:7px 14px;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%;margin-top:8px;transition:all .15s;}
+.btn-danger:hover{background:var(--red);color:#fff;}
+
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:10px 16px;font-size:13px;box-shadow:var(--shadow-md);z-index:300;display:flex;align-items:center;gap:8px;transform:translateY(20px);opacity:0;transition:all .25s;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast i{color:var(--green);}
+
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.section-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px;}
+
+.loading-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:16px;}
+.loading-screen .logo-icon{width:48px;height:48px;background:var(--purple);border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;}
+.loading-screen p{font-size:13px;color:var(--text3);}
+.spinner{width:20px;height:20px;border:2px solid var(--border2);border-top-color:var(--purple);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<div class="loading-screen" id="loading-screen">
+  <div class="logo-icon"><i class="ti ti-rocket"></i></div>
+  <p>Verbinde mit Firebase...</p>
+  <div class="spinner"></div>
+</div>
+
+<div class="app" style="opacity:0;transition:opacity .3s;" id="app-root">
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-icon"><i class="ti ti-rocket"></i></div>
+      <div>
+        <div class="logo-text">Startup OS</div>
+        <div class="logo-sub" id="project-name-label">the-cave</div>
+      </div>
+    </div>
+    <div class="live-badge"><span class="live-dot"></span>Live Sync aktiv</div>
+    <div class="nav-label">Workspace</div>
+    <div class="nav-item active" onclick="showPage('kanban',this)"><i class="ti ti-layout-kanban"></i> Board</div>
+    <div class="nav-item" onclick="showPage('calendar',this)"><i class="ti ti-calendar"></i> Kalender</div>
+    <div class="nav-item" onclick="showPage('vision',this)"><i class="ti ti-bulb"></i> Vision</div>
+    <div class="nav-item" onclick="showPage('team',this)"><i class="ti ti-users"></i> Team & Verträge</div>
+    <div class="sidebar-footer">
+      <button class="theme-btn" onclick="toggleTheme()"><i class="ti ti-moon"></i> Dark Mode</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- KANBAN -->
+    <div id="page-kanban" class="page active">
+      <div class="topbar">
+        <div class="page-heading"><h1>Projekt-Board</h1><p>Aufgaben, Deadlines und Verantwortlichkeiten</p></div>
+        <button class="add-btn" onclick="openModal('task')"><i class="ti ti-plus"></i> Aufgabe</button>
+      </div>
+      <div class="content">
+        <div class="stats-row" id="stats-row"></div>
+        <div class="kanban-cols">
+          <div class="col-wrap" id="drop-backlog" ondrop="drop(event,'backlog')" ondragover="allowDrop(event,'backlog')" ondragleave="dragLeave('backlog')">
+            <div class="col-header"><div class="col-title-row"><span class="col-dot" style="background:#888"></span>Backlog</div><span class="col-count" id="cnt-backlog">0</span></div>
+            <div id="col-backlog"></div>
+            <button class="add-card-btn" onclick="openModal('task','backlog')"><i class="ti ti-plus"></i> hinzufügen</button>
+          </div>
+          <div class="col-wrap" id="drop-todo" ondrop="drop(event,'todo')" ondragover="allowDrop(event,'todo')" ondragleave="dragLeave('todo')">
+            <div class="col-header"><div class="col-title-row"><span class="col-dot" style="background:#6c5ce7"></span>To Do</div><span class="col-count" id="cnt-todo">0</span></div>
+            <div id="col-todo"></div>
+            <button class="add-card-btn" onclick="openModal('task','todo')"><i class="ti ti-plus"></i> hinzufügen</button>
+          </div>
+          <div class="col-wrap" id="drop-doing" ondrop="drop(event,'doing')" ondragover="allowDrop(event,'doing')" ondragleave="dragLeave('doing')">
+            <div class="col-header"><div class="col-title-row"><span class="col-dot" style="background:#e8900a"></span>In Arbeit</div><span class="col-count" id="cnt-doing">0</span></div>
+            <div id="col-doing"></div>
+            <button class="add-card-btn" onclick="openModal('task','doing')"><i class="ti ti-plus"></i> hinzufügen</button>
+          </div>
+          <div class="col-wrap" id="drop-done" ondrop="drop(event,'done')" ondragover="allowDrop(event,'done')" ondragleave="dragLeave('done')">
+            <div class="col-header"><div class="col-title-row"><span class="col-dot" style="background:#00a86b"></span>Erledigt</div><span class="col-count" id="cnt-done">0</span></div>
+            <div id="col-done"></div>
+            <button class="add-card-btn" onclick="openModal('task','done')"><i class="ti ti-plus"></i> hinzufügen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div id="page-calendar" class="page">
+      <div class="topbar">
+        <div class="page-heading"><h1>Kalender</h1><p>Milestones, Meetings & Deadlines</p></div>
+        <button class="add-btn" onclick="openModal('event')"><i class="ti ti-plus"></i> Event</button>
+      </div>
+      <div class="content">
+        <div class="cal-layout">
+          <div>
+            <div class="cal-nav">
+              <button class="icon-btn" onclick="changeMonth(-1)"><i class="ti ti-chevron-left"></i></button>
+              <h2 id="cal-label"></h2>
+              <button class="icon-btn" onclick="changeMonth(1)"><i class="ti ti-chevron-right"></i></button>
+            </div>
+            <div class="cal-days-grid" id="cal-grid"></div>
+          </div>
+          <div class="cal-sidebar">
+            <div class="sidebar-sec-title">Upcoming</div>
+            <div id="event-list"></div>
+            <button class="add-btn" style="width:100%;justify-content:center;margin-top:10px" onclick="openModal('event')"><i class="ti ti-plus"></i> Event</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VISION -->
+    <div id="page-vision" class="page">
+      <div class="topbar">
+        <div class="page-heading"><h1>Vision Board</h1><p>Ziele, Milestones & das grosse Warum</p></div>
+        <button class="add-btn" onclick="openModal('vision')"><i class="ti ti-plus"></i> Ziel</button>
+      </div>
+      <div class="content">
+        <div class="vision-grid" id="vision-grid"></div>
+      </div>
+    </div>
+
+    <!-- TEAM -->
+    <div id="page-team" class="page">
+      <div class="topbar">
+        <div class="page-heading"><h1>Team & Verträge</h1><p>Rollen, Aufgaben & rechtliche Grundlagen</p></div>
+        <button class="add-btn" onclick="openModal('contract')"><i class="ti ti-plus"></i> Vertrag</button>
+      </div>
+      <div class="content">
+        <div class="section-label">Gründer-Team</div>
+        <div class="team-grid" id="team-grid"></div>
+        <div class="section-label">Vertrags-Checkliste</div>
+        <div class="contracts-wrap">
+          <div class="contracts-header"><i class="ti ti-file-text" style="color:var(--purple)"></i> Verträge & Dokumente</div>
+          <div id="contract-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-title" id="modal-title"></div>
+    <div id="modal-body"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-save" id="modal-save">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg">Gespeichert</span></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, push, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCsib2O5pQoKwgjWA8kodfPKXjHivuspSs",
+  authDomain: "the-cave-2f980.firebaseapp.com",
+  databaseURL: "https://the-cave-2f980-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "the-cave-2f980",
+  storageBucket: "the-cave-2f980.firebasestorage.app",
+  messagingSenderId: "445048519819",
+  appId: "1:445048519819:web:5012f097f140ea7e3a288e"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const MEMBERS = ['Gründer 1','Gründer 2','Gründer 3','Gründer 4','Nico (Advisor)'];
+const ROLES = ['CEO / Strategie','Finanzen / Legal','Marketing & Brand','Product / Tech','Advisor'];
+const AVATAR_COLORS = [
+  {bg:'#ede9ff',fg:'#6c5ce7'},{bg:'#e3f7ee',fg:'#00a86b'},
+  {bg:'#fef3e2',fg:'#e8900a'},{bg:'#fff0f0',fg:'#e53e3e'},
+  {bg:'#e0faf5',fg:'#0d9488'}
+];
+const vColors = {
+  purple:{bg:'#ede9ff',fg:'#6c5ce7'},teal:{bg:'#e0faf5',fg:'#0d9488'},
+  amber:{bg:'#fef3e2',fg:'#e8900a'},green:{bg:'#e3f7ee',fg:'#00a86b'},
+  coral:{bg:'#faece7',fg:'#993c1d'}
+};
+
+let tasks={}, events={}, visions={}, contracts={};
+let calY=2026, calM=5, dragId=null;
+const months=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+
+// SEED DATA — only written once if database is empty
+const SEED = {
+  tasks: {
+    t1:{title:'Pitch Deck finalisieren',owner:'Gründer 1',deadline:'2026-06-15',priority:'high',col:'todo',notes:'Slide 8–12 fehlen noch'},
+    t2:{title:'Sponsoring-Vertrag prüfen',owner:'Gründer 2',deadline:'2026-06-10',priority:'high',col:'doing',notes:''},
+    t3:{title:'Social Media Setup',owner:'Gründer 3',deadline:'2026-06-20',priority:'mid',col:'todo',notes:'Instagram + TikTok'},
+    t4:{title:'Gesellschaftsvertrag aufsetzen',owner:'Nico (Advisor)',deadline:'2026-06-30',priority:'high',col:'backlog',notes:'Anwalt kontaktieren'},
+    t5:{title:'Marktforschung Wettbewerb',owner:'Gründer 4',deadline:'2026-06-25',priority:'mid',col:'todo',notes:''},
+    t6:{title:'Domain & Hosting',owner:'Gründer 3',deadline:'2026-06-08',priority:'low',col:'done',notes:''},
+    t7:{title:'Logo Design',owner:'Gründer 1',deadline:'2026-06-12',priority:'mid',col:'doing',notes:''},
+  },
+  events: {
+    e1:{title:'Team Kick-off',date:'2026-06-03',color:'purple'},
+    e2:{title:'Investor Call',date:'2026-06-10',color:'green'},
+    e3:{title:'Pitch Deck Deadline',date:'2026-06-15',color:'amber'},
+    e4:{title:'Legal Review',date:'2026-06-20',color:'purple'},
+    e5:{title:'Launch Sprint',date:'2026-06-28',color:'green'},
+  },
+  visions: {
+    v1:{label:'Umsatz Ziel Q4',num:'50K',unit:'CHF',sub:'Erster Revenue Milestone',progress:15,tag:'Finanzen',color:'purple'},
+    v2:{label:'Aktive Nutzer',num:'1K',unit:'',sub:'Bis Ende Jahr',progress:5,tag:'Wachstum',color:'teal'},
+    v3:{label:'Sponsorings',num:'3',unit:'',sub:'Aktive Brand-Deals',progress:33,tag:'Deals',color:'amber'},
+    v4:{label:'Team Headcount',num:'6',unit:'',sub:'Inkl. 2 neue Stellen',progress:67,tag:'Team',color:'green'},
+    v5:{label:'Go-Live',num:'Sep',unit:"'26",sub:'Markteinführung Target',progress:0,tag:'Milestone',color:'coral'},
+  },
+  contracts: {
+    c1:{title:'Gesellschaftsvertrag (GmbH)',owner:'Alle Gründer',status:'missing'},
+    c2:{title:'Equity Split Vereinbarung',owner:'Alle Gründer',status:'missing'},
+    c3:{title:'Sponsoring Vertrag #1',owner:'Gründer 2',status:'pending'},
+    c4:{title:'NDA mit Partner XY',owner:'Gründer 1',status:'done'},
+    c5:{title:'IP / Markenrecht',owner:'Nico (Advisor)',status:'missing'},
+    c6:{title:'Arbeitsverträge (zukünftig)',owner:'Alle Gründer',status:'pending'},
+  }
+};
+
+function fmtD(d){const dt=new Date(d+'T00:00');return dt.toLocaleDateString('de-CH',{day:'2-digit',month:'short'});}
+function dlClass(d){const diff=(new Date(d+'T00:00')-new Date())/86400000;return diff<0?'dl-late':diff<7?'dl-warn':'dl-ok';}
+function toast(msg){const t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+function showPage(p,el){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  if(el)el.classList.add('active');
+  if(p==='calendar')renderCal();
+  if(p==='vision')renderVision();
+  if(p==='team')renderTeam();
+}
+window.showPage = showPage;
+
+function toggleTheme(){
+  const d=document.documentElement;
+  d.dataset.theme=d.dataset.theme==='dark'?'':'dark';
+  document.querySelector('.theme-btn').innerHTML=d.dataset.theme==='dark'?'<i class="ti ti-sun"></i> Light Mode':'<i class="ti ti-moon"></i> Dark Mode';
+}
+window.toggleTheme = toggleTheme;
+
+// ── FIREBASE LISTENERS ──────────────────────────────────────────────────────
+function initListeners(){
+  onValue(ref(db,'tasks'), snap=>{
+    tasks = snap.val()||{};
+    renderKanban();
+    if(document.getElementById('page-team').classList.contains('active'))renderTeam();
+  });
+  onValue(ref(db,'events'), snap=>{
+    events = snap.val()||{};
+    if(document.getElementById('page-calendar').classList.contains('active'))renderCal();
+  });
+  onValue(ref(db,'visions'), snap=>{
+    visions = snap.val()||{};
+    if(document.getElementById('page-vision').classList.contains('active'))renderVision();
+  });
+  onValue(ref(db,'contracts'), snap=>{
+    contracts = snap.val()||{};
+    if(document.getElementById('page-team').classList.contains('active'))renderTeam();
+  });
+}
+
+// ── KANBAN ───────────────────────────────────────────────────────────────────
+function renderKanban(){
+  const arr=Object.entries(tasks).map(([k,v])=>({...v,_key:k}));
+  ['backlog','todo','doing','done'].forEach(col=>{
+    const t=arr.filter(x=>x.col===col);
+    document.getElementById('cnt-'+col).textContent=t.length;
+    document.getElementById('col-'+col).innerHTML=t.map(t=>`
+      <div class="task-card" draggable="true" ondragstart="ds(event,'${t._key}')" onclick="editTask('${t._key}')">
+        <div class="task-top">
+          <div class="task-title">${t.title}</div>
+          <span class="prio-pill prio-${t.priority}">${t.priority==='high'?'Hoch':t.priority==='mid'?'Mittel':'Tief'}</span>
+        </div>
+        ${t.notes?`<div class="task-note">${t.notes}</div>`:''}
+        <div class="task-footer">
+          <span class="task-owner"><i class="ti ti-user"></i>${t.owner.replace('Gründer','G.')}</span>
+          <span class="deadline-tag ${dlClass(t.deadline)}">${fmtD(t.deadline)}</span>
+        </div>
+      </div>`).join('');
+  });
+  const total=arr.length,done=arr.filter(t=>t.col==='done').length;
+  const high=arr.filter(t=>t.priority==='high'&&t.col!=='done').length;
+  const overdue=arr.filter(t=>t.col!=='done'&&(new Date(t.deadline+'T00:00')-new Date())<0).length;
+  document.getElementById('stats-row').innerHTML=`
+    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-label">Aufgaben gesamt</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--green)">${done}</div><div class="stat-label">Erledigt</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--red)">${high}</div><div class="stat-label">Hohe Priorität offen</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--amber)">${overdue}</div><div class="stat-label">Überfällig</div></div>`;
+}
+
+function ds(e,key){dragId=key;e.dataTransfer.effectAllowed='move';}
+function allowDrop(e,col){e.preventDefault();document.getElementById('drop-'+col).classList.add('drag-over');}
+function dragLeave(col){document.getElementById('drop-'+col).classList.remove('drag-over');}
+function drop(e,col){
+  e.preventDefault();
+  document.getElementById('drop-'+col).classList.remove('drag-over');
+  if(dragId){
+    update(ref(db,'tasks/'+dragId),{col});
+    toast('Task verschoben');
+    dragId=null;
+  }
+}
+window.ds=ds; window.allowDrop=allowDrop; window.dragLeave=dragLeave; window.drop=drop;
+
+function editTask(key){
+  const t={...tasks[key],_key:key};
+  document.getElementById('modal-title').textContent='Aufgabe bearbeiten';
+  document.getElementById('modal-body').innerHTML=taskForm(t);
+  document.getElementById('modal-save').onclick=()=>{
+    const title=document.getElementById('f-title').value.trim();
+    if(!title)return;
+    update(ref(db,'tasks/'+key),{
+      title,col:document.getElementById('f-col').value,
+      owner:document.getElementById('f-owner').value,
+      deadline:document.getElementById('f-deadline').value,
+      priority:document.getElementById('f-priority').value,
+      notes:document.getElementById('f-notes').value
+    });
+    toast('Aufgabe aktualisiert');closeModal();
+  };
+  document.getElementById('modal-overlay').classList.add('open');
+}
+window.editTask=editTask;
+
+function delTask(key){
+  remove(ref(db,'tasks/'+key));
+  toast('Aufgabe gelöscht');closeModal();
+}
+window.delTask=delTask;
+
+function taskForm(t){
+  return `
+    <div class="form-row"><label>Titel</label><input id="f-title" value="${t?t.title:''}"></div>
+    <div class="form-row"><label>Spalte</label><select id="f-col">
+      ${['backlog','todo','doing','done'].map(c=>`<option value="${c}"${t&&t.col===c?' selected':''}>${c==='backlog'?'Backlog':c==='todo'?'To Do':c==='doing'?'In Arbeit':'Erledigt'}</option>`).join('')}
+    </select></div>
+    <div class="form-row"><label>Verantwortlich</label><select id="f-owner">${MEMBERS.map(m=>`<option${t&&t.owner===m?' selected':''}>${m}</option>`).join('')}</select></div>
+    <div class="form-row"><label>Deadline</label><input id="f-deadline" type="date" value="${t?t.deadline:'2026-06-30'}"></div>
+    <div class="form-row"><label>Priorität</label><select id="f-priority">
+      <option value="high"${t&&t.priority==='high'?' selected':''}>Hoch</option>
+      <option value="mid"${t&&t.priority==='mid'?' selected':''}>Mittel</option>
+      <option value="low"${t&&t.priority==='low'?' selected':''}>Tief</option>
+    </select></div>
+    <div class="form-row"><label>Notiz</label><textarea id="f-notes">${t?t.notes:''}</textarea></div>
+    ${t&&t._key?`<button class="btn-danger" onclick="delTask('${t._key}')"><i class="ti ti-trash"></i> Aufgabe löschen</button>`:''}`;
+}
+
+// ── CALENDAR ─────────────────────────────────────────────────────────────────
+function renderCal(){
+  document.getElementById('cal-label').textContent=months[calM]+' '+calY;
+  const first=new Date(calY,calM,1).getDay();
+  const offset=first===0?6:first-1;
+  const dim=new Date(calY,calM+1,0).getDate();
+  const today=new Date();
+  const evArr=Object.entries(events).map(([k,v])=>({...v,_key:k}));
+  let html=['Mo','Di','Mi','Do','Fr','Sa','So'].map(d=>`<div class="cal-day-label">${d}</div>`).join('');
+  for(let i=0;i<offset;i++)html+=`<div class="cal-cell empty"></div>`;
+  for(let d=1;d<=dim;d++){
+    const ds=`${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isTd=today.getDate()===d&&today.getMonth()===calM&&today.getFullYear()===calY;
+    const evs=evArr.filter(e=>e.date===ds);
+    html+=`<div class="cal-cell${isTd?' today':''}">
+      ${isTd?`<div class="today-badge">${d}</div>`:`<div class="cal-num">${d}</div>`}
+      ${evs.map(e=>`<div class="cal-ev ev-${e.color}" title="${e.title}">${e.title}</div>`).join('')}
+    </div>`;
+  }
+  document.getElementById('cal-grid').innerHTML=html;
+  const now=new Date(today.toDateString());
+  const upcoming=evArr.filter(e=>new Date(e.date+'T00:00')>=now).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  document.getElementById('event-list').innerHTML=upcoming.slice(0,6).map(e=>`
+    <div class="ev-item ${e.color==='green'?'green':e.color==='amber'?'amber':''}">
+      <div class="ev-title">${e.title}</div>
+      <div class="ev-date">${fmtD(e.date)}</div>
+    </div>`).join('');
+}
+function changeMonth(d){calM+=d;if(calM>11){calM=0;calY++;}if(calM<0){calM=11;calY--;}renderCal();}
+window.changeMonth=changeMonth;
+
+// ── VISION ───────────────────────────────────────────────────────────────────
+function renderVision(){
+  const arr=Object.entries(visions).map(([k,v])=>({...v,_key:k}));
+  document.getElementById('vision-grid').innerHTML=arr.map(v=>{
+    const c=vColors[v.color]||vColors.purple;
+    return `<div class="vision-card" style="border-top:3px solid ${c.fg}" onclick="editVision('${v._key}')">
+      <span class="v-tag" style="background:${c.bg};color:${c.fg}">${v.tag}</span>
+      ${v.num?`<div class="v-num" style="color:${c.fg}">${v.num}<span class="v-unit">${v.unit}</span></div>`:''}
+      <div class="v-label">${v.label}</div>
+      <div class="v-sub">${v.sub}</div>
+      ${v.progress>0?`<div class="v-progress"><div class="v-fill" style="width:${v.progress}%;background:${c.fg}"></div></div>`:''}
+    </div>`;
+  }).join('')+`<div class="vision-card manifesto-card"><span class="v-tag">Manifesto</span><div class="v-sub">"Das beste Produkt unserer Generation bauen — mit Sinn."</div><div class="v-label" style="margin-top:12px;color:rgba(255,255,255,.6)">Startup OS — 2026</div></div>`;
+}
+
+function editVision(key){
+  const v={...visions[key]};
+  document.getElementById('modal-title').textContent='Ziel bearbeiten';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-row"><label>Label</label><input id="f-label" value="${v.label}"></div>
+    <div class="form-row"><label>Zahl / Wert</label><input id="f-num" value="${v.num}"></div>
+    <div class="form-row"><label>Einheit</label><input id="f-unit" value="${v.unit}"></div>
+    <div class="form-row"><label>Beschreibung</label><input id="f-sub" value="${v.sub}"></div>
+    <div class="form-row"><label>Fortschritt %</label><input id="f-prog" type="number" min="0" max="100" value="${v.progress}"></div>
+    <div class="form-row"><label>Kategorie</label><input id="f-tag" value="${v.tag}"></div>
+    <button class="btn-danger" onclick="delVision('${key}')"><i class="ti ti-trash"></i> Ziel löschen</button>`;
+  document.getElementById('modal-save').onclick=()=>{
+    update(ref(db,'visions/'+key),{
+      label:document.getElementById('f-label').value,
+      num:document.getElementById('f-num').value,
+      unit:document.getElementById('f-unit').value,
+      sub:document.getElementById('f-sub').value,
+      progress:parseInt(document.getElementById('f-prog').value)||0,
+      tag:document.getElementById('f-tag').value
+    });
+    toast('Ziel aktualisiert');closeModal();
+  };
+  document.getElementById('modal-overlay').classList.add('open');
+}
+window.editVision=editVision;
+
+function delVision(key){remove(ref(db,'visions/'+key));toast('Ziel gelöscht');closeModal();}
+window.delVision=delVision;
+
+// ── TEAM ─────────────────────────────────────────────────────────────────────
+function renderTeam(){
+  const tArr=Object.values(tasks);
+  const initials=n=>n.split(' ').map(w=>w[0]).slice(0,2).join('');
+  document.getElementById('team-grid').innerHTML=MEMBERS.map((m,i)=>{
+    const mt=tArr.filter(t=>t.owner===m&&t.col!=='done');
+    const ac=AVATAR_COLORS[i];
+    return `<div class="member-card">
+      <div class="avatar" style="background:${ac.bg};color:${ac.fg}">${initials(m)}</div>
+      <div class="m-name">${m}</div>
+      <div class="m-role">${ROLES[i]}</div>
+      <div class="task-chips">${mt.length===0?`<span class="chip">Keine offenen Tasks</span>`:mt.map(t=>`<span class="chip${t.priority==='high'?' high':''}">${t.title.substring(0,18)}${t.title.length>18?'…':''}</span>`).join('')}</div>
+    </div>`;
+  }).join('');
+
+  const sL={done:'Unterzeichnet',pending:'In Bearbeitung',missing:'Fehlt'};
+  const sC={done:'s-done',pending:'s-pending',missing:'s-missing'};
+  const iconC={done:'#00a86b',pending:'#e8900a',missing:'#e53e3e'};
+  const cArr=Object.entries(contracts).map(([k,v])=>({...v,_key:k}));
+  document.getElementById('contract-list').innerHTML=cArr.map(c=>`
+    <div class="contract-row">
+      <div class="c-info">
+        <div class="c-icon" style="background:${c.status==='done'?'#e3f7ee':c.status==='pending'?'#fef3e2':'#fff0f0'};color:${iconC[c.status]}"><i class="ti ti-file-text"></i></div>
+        <div><div class="c-title">${c.title}</div><div class="c-owner">${c.owner}</div></div>
+      </div>
+      <span class="c-status ${sC[c.status]}" onclick="cycleContract('${c._key}')" title="Status ändern">${sL[c.status]}</span>
+    </div>`).join('');
+}
+
+function cycleContract(key){
+  const cycle={missing:'pending',pending:'done',done:'missing'};
+  const current=contracts[key].status;
+  update(ref(db,'contracts/'+key),{status:cycle[current]});
+  toast('Status aktualisiert');
+}
+window.cycleContract=cycleContract;
+
+// ── MODAL ────────────────────────────────────────────────────────────────────
+function openModal(type,col){
+  const title={task:'Aufgabe hinzufügen',event:'Event hinzufügen',vision:'Ziel hinzufügen',contract:'Vertrag hinzufügen'};
+  document.getElementById('modal-title').textContent=title[type];
+  if(type==='task'){
+    document.getElementById('modal-body').innerHTML=taskForm(col?{col,owner:MEMBERS[0],deadline:'2026-06-30',priority:'mid',title:'',notes:''}:null).replace(/<button class="btn-danger"[^>]*>[\s\S]*?<\/button>/,'');
+    document.getElementById('modal-save').onclick=()=>{
+      const t=document.getElementById('f-title').value.trim();if(!t)return;
+      push(ref(db,'tasks'),{title:t,col:document.getElementById('f-col').value,owner:document.getElementById('f-owner').value,deadline:document.getElementById('f-deadline').value,priority:document.getElementById('f-priority').value,notes:document.getElementById('f-notes').value});
+      toast('Aufgabe hinzugefügt');closeModal();
+    };
+  } else if(type==='event'){
+    document.getElementById('modal-body').innerHTML=`
+      <div class="form-row"><label>Titel</label><input id="f-title" placeholder="z.B. Investor Meeting"></div>
+      <div class="form-row"><label>Datum</label><input id="f-date" type="date" value="2026-06-15"></div>
+      <div class="form-row"><label>Farbe</label><select id="f-color"><option value="purple">Lila</option><option value="green">Grün</option><option value="amber">Orange</option></select></div>`;
+    document.getElementById('modal-save').onclick=()=>{
+      const t=document.getElementById('f-title').value.trim();if(!t)return;
+      push(ref(db,'events'),{title:t,date:document.getElementById('f-date').value,color:document.getElementById('f-color').value});
+      toast('Event hinzugefügt');closeModal();
+    };
+  } else if(type==='vision'){
+    document.getElementById('modal-body').innerHTML=`
+      <div class="form-row"><label>Label</label><input id="f-label" placeholder="z.B. Monatlicher Umsatz"></div>
+      <div class="form-row"><label>Zahl / Wert</label><input id="f-num" placeholder="z.B. 100K"></div>
+      <div class="form-row"><label>Einheit</label><input id="f-unit" placeholder="z.B. CHF"></div>
+      <div class="form-row"><label>Beschreibung</label><input id="f-sub" placeholder="z.B. Bis Q2 2027"></div>
+      <div class="form-row"><label>Fortschritt %</label><input id="f-prog" type="number" min="0" max="100" value="0"></div>
+      <div class="form-row"><label>Kategorie</label><input id="f-tag" placeholder="z.B. Finanzen"></div>`;
+    document.getElementById('modal-save').onclick=()=>{
+      const l=document.getElementById('f-label').value.trim();if(!l)return;
+      push(ref(db,'visions'),{label:l,num:document.getElementById('f-num').value,unit:document.getElementById('f-unit').value,sub:document.getElementById('f-sub').value,progress:parseInt(document.getElementById('f-prog').value)||0,tag:document.getElementById('f-tag').value||'Ziel',color:'purple'});
+      toast('Ziel hinzugefügt');closeModal();
+    };
+  } else if(type==='contract'){
+    document.getElementById('modal-body').innerHTML=`
+      <div class="form-row"><label>Dokument</label><input id="f-title" placeholder="z.B. Mietvertrag Office"></div>
+      <div class="form-row"><label>Verantwortlich</label><select id="f-owner">${MEMBERS.map(m=>`<option>${m}</option>`).join('')}<option>Alle Gründer</option></select></div>
+      <div class="form-row"><label>Status</label><select id="f-status"><option value="missing">Fehlt</option><option value="pending">In Bearbeitung</option><option value="done">Unterzeichnet</option></select></div>`;
+    document.getElementById('modal-save').onclick=()=>{
+      const t=document.getElementById('f-title').value.trim();if(!t)return;
+      push(ref(db,'contracts'),{title:t,owner:document.getElementById('f-owner').value,status:document.getElementById('f-status').value});
+      toast('Vertrag hinzugefügt');closeModal();
+    };
+  }
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
+function closeModalOutside(e){if(e.target===document.getElementById('modal-overlay'))closeModal();}
+window.openModal=openModal; window.closeModal=closeModal; window.closeModalOutside=closeModalOutside;
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+async function init(){
+  // Check if data exists, seed if empty
+  const {get}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js");
+  const snap=await get(ref(db,'tasks'));
+  if(!snap.exists()){
+    await set(ref(db,'tasks'),SEED.tasks);
+    await set(ref(db,'events'),SEED.events);
+    await set(ref(db,'visions'),SEED.visions);
+    await set(ref(db,'contracts'),SEED.contracts);
+  }
+  initListeners();
+  document.getElementById('loading-screen').style.display='none';
+  document.getElementById('app-root').style.opacity='1';
+}
+
+init().catch(err=>{
+  document.getElementById('loading-screen').innerHTML=`
+    <div class="logo-icon" style="background:#e53e3e"><i class="ti ti-x"></i></div>
+    <p style="color:#e53e3e">Firebase Verbindung fehlgeschlagen</p>
+    <p style="font-size:12px;color:var(--text3);max-width:280px;text-align:center">${err.message}</p>`;
+});
+</script>
+</body>
+</html>
